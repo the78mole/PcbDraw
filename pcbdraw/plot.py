@@ -107,6 +107,20 @@ class SvgPathItem:
                     self.type = "L"
                     self.args = None
                     return
+                elif len(path_elems) >= 2:
+                    # Handle case with just two coordinates - treat as a point/move
+                    self.start = (float(path_elems[0]), float(path_elems[1]))
+                    self.end = self.start
+                    self.type = "M"
+                    self.args = None
+                    return
+                elif len(path_elems) == 1:
+                    # Handle case with just one coordinate - treat as a point at origin
+                    self.start = (float(path_elems[0]), 0.0)
+                    self.end = self.start
+                    self.type = "M"
+                    self.args = None
+                    return
                 else:
                     raise SyntaxError(f"Invalid numeric path format: {path}")
             except ValueError:
