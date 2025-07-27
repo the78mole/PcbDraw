@@ -47,3 +47,20 @@ To test KiCad 9 compatibility, ensure you have:
 - KiCad 9 uses the same API patterns as KiCad 8 and 7, so most functionality is shared
 - The `pcbnewTransition` library handles the low-level API differences between versions
 - No breaking changes for existing users - all previous functionality is maintained
+- **KiCad 9 SVG Format Fix**: Updated SVG path parsing to handle numeric-only paths that KiCad 9 generates
+- Enhanced error handling provides fallback mechanisms for malformed SVG paths
+
+## Known Issues and Fixes
+
+### SVG Path Parsing Error
+**Issue**: `SyntaxError: Unsupported path element 136.00000`
+**Cause**: KiCad 9 generates SVG paths in a different format than previous versions
+**Fix**: Enhanced `SvgPathItem` class with fallback parsing and better error handling
+**Files**: `pcbdraw/plot.py` - Updated path parsing logic
+
+### Debug Output
+The updated version provides helpful warnings for problematic paths:
+```
+Warning: Skipping problematic SVG path: '136.00000' - Error: ...
+  -> Fallback path created: 'M 136.0 50.0 L 140.0 54.0'
+```

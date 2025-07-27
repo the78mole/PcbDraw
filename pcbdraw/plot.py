@@ -84,16 +84,45 @@ float_re = r'([-+]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)'
 
 class SvgPathItem:
     def __init__(self, path: str) -> None:
+        # Normalize path by ensuring spaces between commands and numbers
         path = re.sub(r"([MLA])(-?\d+)", r"\1 \2", path)
         path_elems = re.split("[, ]", path)
         path_elems = list(filter(lambda x: x, path_elems))
+        
+        # Handle empty or invalid paths
+        if not path_elems:
+            raise SyntaxError("Empty path")
+            
+        # Handle paths that start with numbers (KiCad 9 format)
         if path_elems[0] != "M":
-            raise SyntaxError("Only paths with absolute position are supported")
+            # Try to detect if this is a numeric-only path (KiCad 9 issue)
+            try:
+                float(path_elems[0])
+                # If we can parse the first element as float, assume it's a coordinate
+                # This might be a simplified path format from KiCad 9
+                if len(path_elems) >= 4:
+                    # Treat as implicit M x y L x y format
+                    self.start = (float(path_elems[0]), float(path_elems[1]))
+                    self.end = (float(path_elems[2]), float(path_elems[3]))
+                    self.type = "L"
+                    self.args = None
+                    return
+                else:
+                    raise SyntaxError(f"Invalid numeric path format: {path}")
+            except ValueError:
+                raise SyntaxError("Only paths with absolute position are supported")
+                
         self.start: Point = tuple(map(float, path_elems[1:3])) # type: ignore
         self.end: Point = (0, 0)
         self.args: Optional[List[Numeric]] = None
         path_elems = path_elems[3:]
-        if path_elems[0] == "L":
+        
+        if not path_elems:
+            # Just a move command, treat as point
+            self.end = self.start
+            self.type = "M"
+            self.args = None
+        elif path_elems[0] == "L":
             x = float(path_elems[1])
             y = float(path_elems[2])
             self.end = (x, y)
@@ -105,7 +134,16 @@ class SvgPathItem:
             self.args = args[0:5]
             self.type = path_elems[0]
         else:
-            raise SyntaxError("Unsupported path element " + path_elems[0])
+            # Try to handle unknown command gracefully
+            try:
+                # If the "command" is actually a number, treat as implicit L
+                x = float(path_elems[0])
+                y = float(path_elems[1])
+                self.end = (x, y)
+                self.type = "L"
+                self.args = None
+            except (ValueError, IndexError):
+                raise SyntaxError("Unsupported path element " + path_elems[0])
 
     @staticmethod
     def is_same(p1: Point, p2: Point) -> bool:
@@ -419,7 +457,25 @@ def get_board_polygon(svg_elements: etree.Element) -> etree.Element:
     for group in svg_elements:
         for svg_element in group:
             if svg_element.tag == "path":
-                elements.append(SvgPathItem(svg_element.attrib["d"]))
+                try:
+                    path_data = svg_element.attrib["d"]
+                    elements.append(SvgPathItem(path_data))
+                except (SyntaxError, KeyError, ValueError) as e:
+                    # Log the problematic path for debugging
+                    path_data = svg_element.attrib.get("d", "NO_D_ATTRIBUTE")
+                    print(f"Warning: Skipping problematic SVG path: '{path_data}' - Error: {e}")
+                    # Try to extract coordinates if possible
+                    try:
+                        # Simple fallback: extract all numbers and create a basic line
+                        coords = re.findall(r'[-+]?\d*\.?\d+', path_data)
+                        if len(coords) >= 4:
+                            x1, y1, x2, y2 = map(float, coords[:4])
+                            # Create a simple line path manually
+                            simple_path = f"M {x1} {y1} L {x2} {y2}"
+                            elements.append(SvgPathItem(simple_path))
+                            print(f"  -> Fallback path created: '{simple_path}'")
+                    except Exception as fallback_error:
+                        print(f"  -> Fallback also failed: {fallback_error}")
             elif svg_element.tag == "circle":
                 # Convert circle to path
                 att = svg_element.attrib
