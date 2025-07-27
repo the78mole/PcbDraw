@@ -29,7 +29,7 @@ except ImportError:
 from pcbdraw.unit import read_resistance
 import svgpathtools # type: ignore
 from lxml import etree, objectify # type: ignore
-from pcbnewTransition import KICAD_VERSION, isV6, isV7, isV8, pcbnew # type: ignore
+from pcbnewTransition import KICAD_VERSION, isV6, isV7, isV8, isV9, pcbnew # type: ignore
 
 T = TypeVar("T")
 Numeric = Union[int, float]
@@ -41,7 +41,7 @@ PKG_BASE = os.path.dirname(__file__)
 
 etree.register_namespace("xlink", "http://www.w3.org/1999/xlink")
 
-LEGACY_KICAD = not isV6() and not isV7() and not isV8()
+LEGACY_KICAD = not isV6() and not isV7() and not isV8() and not isV9()
 
 default_style = {
     "copper": "#417e5a",
@@ -112,7 +112,7 @@ class SvgPathItem:
         dx = p1[0] - p2[0]
         dy = p1[1] - p2[1]
         pseudo_distance = dx*dx + dy*dy
-        if isV7():
+        if isV7() or isV8() or isV9():
             return pseudo_distance < 0.01 ** 2
         return pseudo_distance < 100 ** 2
 
@@ -1030,7 +1030,10 @@ class PcbPlotter():
 
         self.yield_warning: Callable[[str, str], None] = lambda tag, msg: None # Handle warnings
 
-        if isV7():
+        if isV8() or isV9():
+            self.ki2svg = self._ki2svg_v7
+            self.svg2ki = self._svg2ki_v7
+        elif isV7():
             self.ki2svg = self._ki2svg_v7
             self.svg2ki = self._svg2ki_v7
         elif isV6():
@@ -1218,7 +1221,7 @@ class PcbPlotter():
             popt.SetTextMode(pcbnew.PLOT_TEXT_MODE_STROKE)
             if isV6():
                 popt.SetSvgPrecision(self.svg_precision, False)
-            if isV7():
+            if isV7() or isV8() or isV9():
                 popt.SetSvgPrecision(self.svg_precision)
             for action in to_plot:
                 if len(action.layers) == 0:

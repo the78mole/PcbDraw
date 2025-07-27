@@ -1,5 +1,5 @@
 import sys
-from pcbnewTransition import pcbnew, isV6 # type: ignore
+from pcbnewTransition import pcbnew, isV6, isV7, isV8, isV9 # type: ignore
 from pcbnewTransition.pcbnew import BOX2I # type: ignore
 from itertools import chain
 from typing import Optional, List
@@ -39,7 +39,7 @@ def collectEdges(board: pcbnew.BOARD, layerName: str) -> List[pcbnew.EDA_SHAPE]:
     for edge in chain(board.GetDrawings(), *[m.GraphicalItems() for m in board.GetFootprints()]):
         if edge.GetLayerName() != layerName:
             continue
-        if isV6() and isinstance(edge, pcbnew.PCB_DIMENSION_BASE):
+        if (isV6() or isV7() or isV8() or isV9()) and isinstance(edge, pcbnew.PCB_DIMENSION_BASE):
             continue
         edges.append(edge)
     return edges

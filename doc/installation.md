@@ -1,8 +1,8 @@
 # Installation
 
 PcbDraw is a stand-alone CLI tool. It is not an action plugin for KiCAD and
-therefore, it has no menu inside Pcbnew. PcbDraw is compatible with both, KiCAD
-v5 and v6. However, on **Windows and MacOS it works only with v6** (due to
+therefore, it has no menu inside Pcbnew. PcbDraw is compatible with KiCAD
+v5, v6, v7, v8, and v9. However, on **Windows and MacOS it works only with v6 and newer** (due to
 limitations in KiCAD).
 
 ## Linux & MacOS
@@ -29,7 +29,7 @@ are set, PcbDraw will use these paths.
 
 ## Windows
 
-On Windows, you have to use KiCAD v6 and also, you have to install Inkscape 1.x.
+On Windows, you have to use KiCAD v6 or newer and also, you have to install Inkscape 1.x.
 PcbDraw doesn't work with Inkscape 0.9x. To install PcbDraw on Windows, you have
 to open "KiCAD Command Prompt". You can find it in the start menu:
 

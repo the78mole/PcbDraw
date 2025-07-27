@@ -1,0 +1,25 @@
+# requirements.txt für Projekte die das aktualisierte PcbDraw nutzen möchten
+
+# Option 1: Direkt vom lokalen Pfad (anpassen Sie den Pfad entsprechend)
+# -e /home/daniel/GIT/Python/PcbDraw
+
+# Option 2: Vom Git-Repository (wenn gepusht)
+# git+https://github.com/the78mole/PcbDraw.git
+
+# Option 3: Von lokalem Wheel-Package (nach dem Build)
+# ./path/to/PcbDraw-*.whl
+
+# Abhängigkeiten die definitiv benötigt werden:
+pcbnewTransition>=0.5
+numpy
+lxml
+mistune>=2.0.2
+pybars3
+pyyaml
+svgpathtools==1.4.1
+pyVirtualDisplay~=3.0; platform_system!='Windows'
+Pillow~=9.0
+click>=7.1
+
+# Windows-spezifische Abhängigkeit
+LnkParse3; platform_system=='Windows'
